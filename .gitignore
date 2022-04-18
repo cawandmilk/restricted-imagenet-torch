@@ -1,6 +1,7 @@
 venv
 data/
 lightning_logs/
+ckpt/
 
 
 # Byte-compiled / optimized / DLL files
