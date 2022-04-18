@@ -1,6 +1,4 @@
-from cv2 import IMREAD_COLOR
 import torch
-import pytorch_lightning as pl
 
 import cv2
 import tqdm
@@ -99,7 +97,3 @@ class RestrictedImagenetDataset(torch.utils.data.Dataset):
 
         ## And export.
         return return_values
-
-
-class RestrictedImagenetDataloader(pl.LightningDataModule):
-    pass
