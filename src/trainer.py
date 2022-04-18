@@ -1,6 +1,8 @@
 import torch
 import torch_optimizer
+
 import pytorch_lightning as pl
+import torchmetrics
 
 from src.model import get_model
 
@@ -11,13 +13,10 @@ class RestrictedImagenetModel(pl.LightningModule):
     def __init__(self):
         super(RestrictedImagenetModel, self).__init__()
         self.model = get_model(pretrained=False) ## ResNet-50
+
         self.criterion = torch.nn.CrossEntropyLoss()
-
-
-    def _accuracy(self, y_pred, y_true):
-        y_true = y_true.cpu()
-        y_pred = torch.argmax(y_pred, dim=1).cpu()
-        return (y_pred == y_true).to(torch.float).mean()
+        self.train_accuracy = torchmetrics.Accuracy()
+        self.valid_accuracy = torchmetrics.Accuracy()
 
 
     def forward(self, x):
@@ -38,31 +37,29 @@ class RestrictedImagenetModel(pl.LightningModule):
 
         ## Calculate loss without softmax (calculated by class indices).
         loss = self.criterion(y_hat, y) ## input & target
-        acc = self._accuracy(y_pred=y_hat, y_true=y)
 
         ## Return loss.
-        return loss, acc
+        return loss, y_hat, y
 
 
     def training_step(self, train_batch, batch_idx):
         ## Step it.
-        loss, acc = self.step(train_batch)
+        loss, y_hat, y = self.step(train_batch)
+        self.train_accuracy(y_hat, y)
 
         ## Record log.
-        self.log("train_loss", loss, prog_bar=True, logger=True)
-        self.log("train_acc", acc, prog_bar=True, logger=True)
+        self.log("loss", loss, on_step=True, on_epoch=True, prog_bar=False)
+        self.log("acc", self.train_accuracy, on_step=True, on_epoch=True, prog_bar=True)
 
-        ## Return values to either update gradient and accumulate on progress bar.
-        return {"loss": loss, "acc": acc}
+        ## Just return loss.
+        return loss
 
 
     def validation_step(self, val_batch, batch_idx):
         ## Step it.
-        loss, acc = self.step(val_batch)
+        loss, y_hat, y = self.step(val_batch)
+        self.valid_accuracy(y_hat, y)
 
         ## Record log.
-        self.log("val_loss", loss, prog_bar=True, logger=True)
-        self.log("val_acc", acc, prog_bar=True, logger=True)
-
-        ## Return values to either update gradient and accumulate on progress bar.
-        return {"val_loss": loss, "val_acc": acc}
+        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log("val_acc", self.valid_accuracy, on_step=True, on_epoch=True, prog_bar=True)

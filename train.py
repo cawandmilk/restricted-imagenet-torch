@@ -76,6 +76,7 @@ def main(config: argparse.Namespace):
         gpus=1,
         precision=16,               ## mixed precision; float16
         max_epochs=config.epochs,   ## number of epochs
+        log_every_n_steps=10,
     )
 
     ## And just fit.
