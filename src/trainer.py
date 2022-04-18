@@ -162,7 +162,7 @@ class EngineForRestrictedImageNet(DefaultEngine):
             ## Calculate accuracy.
             ## See: https://docs.microsoft.com/ko-kr/windows/ai/windows-ml/tutorials/pytorch-analysis-train-model
             _, predicted = torch.max(output, 1)
-            acc = (predicted == labels).sum()
+            acc = (predicted == labels)
 
         ## If we are using gpu, not cpu,
         if engine.config.gpu_id >= 0:
@@ -193,7 +193,7 @@ class EngineForRestrictedImageNet(DefaultEngine):
             engine.scheduler.step()
 
         loss = loss.cpu().detach().numpy()
-        acc = acc.cpu().detach().numpy()
+        acc = np.mean(acc.cpu().detach().numpy())
 
         return {
             "loss": loss,
